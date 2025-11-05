@@ -65,47 +65,41 @@ typedef struct {
 
 /* USER CODE BEGIN PV */
 /*                  ֡ͷ                  id      length       instruct    address     parameters               crc          */
-u8 torqueFrame[]={  0xFF,0xFF,0xFD,0x00,  0x00,   0x06,0x00,   0x03,      0x40,0x00,   0x01,                   0x00,0x00};
-u8 xl430PFrame[]={  0xFF,0xFF,0xFD,0x00,  0x00,   0x09,0x00,   0x03,      0x74,0x00,   0xAD,0x09,0x00,0x00,    0x65,0x6D};
-u8 xl430PGFrame[]={ 0xFF,0xFF,0xFD,0x00,  0x00,   0x07,0x00,   0x03,      0x54,0x00,   0x80,0x02,              0x65,0x6D};
-u8 ledFrame[]={     0xFF,0xFF,0xFD,0x00,  0x00,   0x06,0x00,   0x03,      0x19,0x00,   0x01,                   0x00,0x00};
-u8 xl320PFrame[]={  0xFF,0xFF,0xFD,0x00,  0x00,   0x07,0x00,   0x03,      0x1E,0x00,   0xAD,0x09,              0x65,0x6D};
-u8 xl320PGFrame[]={ 0xFF,0xFF,0xFD,0x00,  0x00,   0x06,0x00,   0x03,      0x1D,0x00,   0x20,                   0x65,0x6D};
+uint8_t torqueFrame[]={  0xFF,0xFF,0xFD,0x00,  0x00,   0x06,0x00,   0x03,      0x40,0x00,   0x01,                   0x00,0x00};
+uint8_t xl430PFrame[]={  0xFF,0xFF,0xFD,0x00,  0x00,   0x09,0x00,   0x03,      0x74,0x00,   0xAD,0x09,0x00,0x00,    0x65,0x6D};
+uint8_t xl430PGFrame[]={ 0xFF,0xFF,0xFD,0x00,  0x00,   0x07,0x00,   0x03,      0x54,0x00,   0x80,0x02,              0x65,0x6D};
+uint8_t ledFrame[]={     0xFF,0xFF,0xFD,0x00,  0x00,   0x06,0x00,   0x03,      0x19,0x00,   0x01,                   0x00,0x00};
+uint8_t xl320PFrame[]={  0xFF,0xFF,0xFD,0x00,  0x00,   0x07,0x00,   0x03,      0x1E,0x00,   0xAD,0x09,              0x65,0x6D};
+uint8_t xl320PGFrame[]={ 0xFF,0xFF,0xFD,0x00,  0x00,   0x06,0x00,   0x03,      0x1D,0x00,   0x20,                   0x65,0x6D};
 
 
-u8 xl430PRead[]={   0xFF,0xFF,0xFD,0x00,  0x00,   0x07,0x00,   0x02,      0x84,0x00,   0x04,0x00,              0x1D,0x15};
-u8 xl320PRead[]={   0xFF,0xFF,0xFD,0x00,  0x00,   0x07,0x00,   0x02,      0x25,0x00,   0x02,0x00,              0x21,0xB5};
+uint8_t xl430PRead[]={   0xFF,0xFF,0xFD,0x00,  0x00,   0x07,0x00,   0x02,      0x84,0x00,   0x04,0x00,              0x1D,0x15};
+uint8_t xl320PRead[]={   0xFF,0xFF,0xFD,0x00,  0x00,   0x07,0x00,   0x02,      0x25,0x00,   0x02,0x00,              0x21,0xB5};
 
 XPositionInfo *xl430_1=0;
 XPositionInfo *xl430_2=0;
 X320PositionInfo *xl320_1=0;
-u8 xl430_1_data[11];
-u8 xl430_2_data[11];
-u8 xl320_1_data[9];
+uint8_t xl430_1_data[11];
+uint8_t xl430_2_data[11];
+uint8_t xl320_1_data[9];
+
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
 void SystemClock_Config(void);
 /* USER CODE BEGIN PFP */
-void dynamixel_set_direction(uint8_t tx_mode);
-void dynamixel_transmit_packet(uint8_t* packet, uint16_t length);
-uint16_t update_crc(uint16_t crc_accum, uint8_t *data_blk_ptr, uint16_t data_blk_size);
-void dynamixel_write_byte(uint8_t id, uint16_t address, uint8_t value);
-void dynamixel_enable_torque(uint8_t id, uint8_t enable);
-void dynamixel_set_led(uint8_t id, uint8_t color);
-void dynamixel_set_goal_position(uint8_t id, uint16_t position);
-
-//xl系列舵机驱动
+// XL系列舵机函数声明
 void xlSeriesStart(void);
-void xl320SendPosition(u8 id,u16 position);
-void xlSeriesSendFrame(USART_TypeDef * pUSARTx,u8 * frame,u8 length);
-void xlSeriesTorque(u8 id,u8 on,u8 address);
-void xlSeriesLed(u8 id,u8 on,u8 address);
-unsigned short updateCRC(uint16_t crc_accum, uint8_t *data_blk_ptr, uint16_t data_blk_size);
-void debugFrame(u8 *frame,u8 length);
-void xl320SendPGain(u8 id,u8 pGain);
-void xl320ReadPosition(u8 id);
-void xlPowerOff(u8 isOn);
+void xlSeriesSetDirection(uint8_t tx_mode);
+void xlSeriesSendFrame(UART_HandleTypeDef *huart, uint8_t *frame, uint16_t length);
+uint16_t updateCRC(uint16_t crc_accum, uint8_t *data_blk_ptr, uint16_t data_blk_size);
+void xlSeriesLed(uint8_t id, uint8_t on, uint8_t address);
+void xlSeriesTorque(uint8_t id, uint8_t on, uint8_t address);
+void xl320SendPosition(uint8_t id, uint16_t position);
+void xl320SendPGain(uint8_t id, uint8_t pGain);
+void xl320ReadPosition(uint8_t id);
+void xlPowerOff(uint8_t isOn);
+void debugFrame(uint8_t *frame, uint8_t length);
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
@@ -119,7 +113,6 @@ void xlPowerOff(u8 isOn);
   */
 int main(void)
 {
-
   /* USER CODE BEGIN 1 */
 
   /* USER CODE END 1 */
@@ -147,13 +140,13 @@ int main(void)
   MX_USART2_UART_Init();
   MX_USART3_UART_Init();
 
-// 初始化方向控制引脚为接收模式
-dynamixel_set_direction(0);
-HAL_Delay(100); // 等待舵机上电稳定
+  /* USER CODE BEGIN 2 */
+  // 初始化舵机系统
+  xlSeriesStart();
 
-// 使能舵机扭矩
-dynamixel_enable_torque(SERVO_ID, 1);
-HAL_Delay(100);
+  // 设置舵机到初始位置
+  xl320SendPosition(SERVO_ID_3, 512);
+  HAL_Delay(1000);
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -163,24 +156,23 @@ HAL_Delay(100);
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
-	  // 任务1: 转到位置 0 ，亮蓝灯
-	      dynamixel_set_led(SERVO_ID, LED_BLUE);
-	      dynamixel_set_goal_position(SERVO_ID, 0);
-	      HAL_Delay(1500); // 等待1.5秒让舵机转动到位
+    // 任务1: 转到位置0，亮蓝灯
+    xlSeriesLed(SERVO_ID_3, LED_BLUE, XL320Led);
+    xl320SendPosition(SERVO_ID_3, 0);
+    HAL_Delay(1500);
 
-	      // 任务2: 转到位置 1023 (大约300度)，亮红灯
-	      dynamixel_set_led(SERVO_ID, LED_RED);
-	      dynamixel_set_goal_position(SERVO_ID, 1023);
-	      HAL_Delay(1500);
+    // 任务2: 转到中间位置512，亮绿灯
+    xlSeriesLed(SERVO_ID_3, LED_GREEN, XL320Led);
+    xl320SendPosition(SERVO_ID_3, 512);
+    HAL_Delay(1500);
 
-	      // 任务3: 转到中间位置 512，亮绿灯
-	      dynamixel_set_led(SERVO_ID, LED_GREEN);
-	      dynamixel_set_goal_position(SERVO_ID, 512);
-	      HAL_Delay(1500);
+    // 任务3: 转到最大位置1023，亮红灯
+    xlSeriesLed(SERVO_ID_3, LED_RED, XL320Led);
+    xl320SendPosition(SERVO_ID_3, 1023);
+    HAL_Delay(1500);
   }
   /* USER CODE END 3 */
 }
-
 /**
   * @brief System Clock Configuration
   * @retval None
@@ -221,30 +213,77 @@ void SystemClock_Config(void)
 }
 
 /* USER CODE BEGIN 4 */
-#define DIR1_PORT GPIOA
-#define DIR1      GPIO_PIN_1
+// ============================================================================
+// XL系列舵机控制函数
+// ============================================================================
 
-// 设置数据方向
-void dynamixel_set_direction(uint8_t tx_mode) {
+/**
+  * @brief  初始化舵机系统
+  * @retval None
+  */
+void xlSeriesStart(void)
+{
+    // 初始化LED和扭矩
+    xlSeriesLed(SERVO_ID_1, 0x01, XL430Led);
+    HAL_Delay(100);
+    xlSeriesLed(SERVO_ID_2, 0x01, XL430Led);
+    HAL_Delay(100);
+    xlSeriesLed(SERVO_ID_3, 0x01, XL320Led);
+    HAL_Delay(100);
+
+    xlSeriesTorque(SERVO_ID_1, 0x01, XL430Torque);
+    HAL_Delay(100);
+    xlSeriesTorque(SERVO_ID_2, 0x01, XL430Torque);
+    HAL_Delay(100);
+    xlSeriesTorque(SERVO_ID_3, 0x01, XL320Torque);
+    HAL_Delay(100);
+}
+
+
+/**
+  * @brief  设置通信方向
+  * @param  tx_mode: 1=发送模式, 0=接收模式
+  * @retval None
+  */
+void xlSeriesSetDirection(uint8_t tx_mode)
+{
     if (tx_mode) {
         HAL_GPIO_WritePin(DIR1_GPIO_Port, DIR1_Pin, GPIO_PIN_SET);
     } else {
         HAL_GPIO_WritePin(DIR1_GPIO_Port, DIR1_Pin, GPIO_PIN_RESET);
     }
 }
-// 发送数据包
-void dynamixel_transmit_packet(uint8_t* packet, uint16_t length) {
-    dynamixel_set_direction(1); // 切换到发送模式
-    HAL_UART_Transmit(&huart2, packet, length, 100); // 发送数据
-    while (HAL_UART_GetState(&huart2) != HAL_UART_STATE_READY);
-    dynamixel_set_direction(0); // 切换回接收模式
+
+/**
+  * @brief  发送数据帧
+  * @param  huart: 串口句柄
+  * @param  frame: 数据帧指针
+  * @param  length: 数据长度
+  * @retval None
+  */
+void xlSeriesSendFrame(UART_HandleTypeDef *huart, uint8_t *frame, uint16_t length)
+{
+    xlSeriesSetDirection(1); // 设置为发送模式
+
+    HAL_UART_Transmit(huart, frame, length, 100);
+
+    // 等待发送完成
+    while (HAL_UART_GetState(huart) != HAL_UART_STATE_READY);
+
+    xlSeriesSetDirection(0); // 切换回接收模式
 }
 
-
-unsigned short update_crc(unsigned short crc_accum, unsigned char *data_blk_ptr, unsigned short data_blk_size)
+/**
+  * @brief  CRC计算函数
+  * @param  crc_accum: 初始CRC值
+  * @param  data_blk_ptr: 数据指针
+  * @param  data_blk_size: 数据长度
+  * @retval 计算后的CRC值
+  */
+uint16_t updateCRC(uint16_t crc_accum, uint8_t *data_blk_ptr, uint16_t data_blk_size)
 {
-    unsigned short i, j;
-    unsigned short crc_table[256] = {
+    uint16_t i, j;
+    static const uint16_t crc_table[256] = {
         0x0000, 0x8005, 0x800F, 0x000A, 0x801B, 0x001E, 0x0014, 0x8011,
         0x8033, 0x0036, 0x003C, 0x8039, 0x0028, 0x802D, 0x8027, 0x0022,
         0x8063, 0x0066, 0x006C, 0x8069, 0x0078, 0x807D, 0x8077, 0x0072,
@@ -279,75 +318,167 @@ unsigned short update_crc(unsigned short crc_accum, unsigned char *data_blk_ptr,
         0x8213, 0x0216, 0x021C, 0x8219, 0x0208, 0x820D, 0x8207, 0x0202
     };
 
-    for(j = 0; j < data_blk_size; j++)
-    {
-        i = ((unsigned short)(crc_accum >> 8) ^ data_blk_ptr[j]) & 0xFF;
+    for (j = 0; j < data_blk_size; j++) {
+        i = ((uint16_t)(crc_accum >> 8) ^ data_blk_ptr[j]) & 0xFF;
         crc_accum = (crc_accum << 8) ^ crc_table[i];
     }
 
     return crc_accum;
 }
 
-// 构造并发送一个"写"指令
-void dynamixel_write_packet(uint8_t id, uint16_t address, uint8_t* data, uint16_t data_len) {
-    uint8_t packet[64]; // 缓冲区
-    uint16_t packet_len = data_len + 5; // 指令(1) + 地址(2) + 数据(N) + CRC(2)
-    uint16_t total_len = data_len + 12; // 完整数据包长度
+/**
+  * @brief  控制舵机LED
+  * @param  id: 舵机ID
+  * @param  on: LED状态
+  * @param  address: LED地址
+  * @retval None
+  */
+void xlSeriesLed(uint8_t id, uint8_t on, uint8_t address)
+{
+    uint16_t crc;
 
-    packet_len = data_len + 3; // Length = Instruction(1) + Parameters(N)
+    ledFrame[4] = id;
+    ledFrame[8] = address;
+    ledFrame[10] = on;
 
-    // 完整数据包的长度
-    total_len = packet_len + 7; // Length + 7 (Headers, Reserved, ID, CRC)
+    crc = updateCRC(0, ledFrame, 11);
+    ledFrame[11] = (uint8_t)(crc & 0xff);
+    ledFrame[12] = (uint8_t)((crc >> 8) & 0xff);
 
-    // 1. 构建包头和ID
-    packet[0] = 0xFF;
-    packet[1] = 0xFF;
-    packet[2] = 0xFD;
-    packet[3] = 0x00;
-    packet[4] = id;
-    // 2. 长度 (小端模式)
-    packet[5] = packet_len & 0xFF;
-    packet[6] = (packet_len >> 8) & 0xFF;
-    // 3. 指令
-    packet[7] = 0x03; // WRITE 指令
-    // 4. 参数
-    packet[8] = address & 0xFF; // 地址 (小端模式)
-    packet[9] = (address >> 8) & 0xFF;
-    for(int i=0; i < data_len; i++) {
-        packet[10+i] = data[i];
+    xlSeriesSendFrame(&huart2, ledFrame, 13);
+    HAL_Delay(1);
+}
+
+/**
+  * @brief  控制舵机扭矩
+  * @param  id: 舵机ID
+  * @param  on: 扭矩状态
+  * @param  address: 扭矩地址
+  * @retval None
+  */
+void xlSeriesTorque(uint8_t id, uint8_t on, uint8_t address)
+{
+    uint16_t crc;
+
+    torqueFrame[4] = id;
+    torqueFrame[8] = address;
+    torqueFrame[10] = on;
+
+    crc = updateCRC(0, torqueFrame, 11);
+    torqueFrame[11] = (uint8_t)(crc & 0xff);
+    torqueFrame[12] = (uint8_t)((crc >> 8) & 0xff);
+
+    xlSeriesSendFrame(&huart2, torqueFrame, 13);
+    HAL_Delay(1);
+}
+
+/**
+  * @brief  设置XL320舵机位置
+  * @param  id: 舵机ID
+  * @param  position: 目标位置
+  * @retval None
+  */
+void xl320SendPosition(uint8_t id, uint16_t position)
+{
+    uint16_t crc;
+
+    xl320PFrame[4] = id;
+    xl320PFrame[10] = (uint8_t)(position & 0xFF);
+    xl320PFrame[11] = (uint8_t)((position >> 8) & 0xFF);
+
+    crc = updateCRC(0, xl320PFrame, 12);
+    xl320PFrame[12] = (uint8_t)(crc & 0xff);
+    xl320PFrame[13] = (uint8_t)((crc >> 8) & 0xff);
+
+    xlSeriesSendFrame(&huart2, xl320PFrame, 14);
+    HAL_Delay(1);
+}
+
+/**
+  * @brief  设置XL320舵机P增益
+  * @param  id: 舵机ID
+  * @param  pGain: P增益值
+  * @retval None
+  */
+void xl320SendPGain(uint8_t id, uint8_t pGain)
+{
+    uint16_t crc;
+
+    xl320PGFrame[4] = id;
+    xl320PGFrame[10] = pGain;
+
+    crc = updateCRC(0, xl320PGFrame, 11);
+    xl320PGFrame[11] = (uint8_t)(crc & 0xff);
+    xl320PGFrame[12] = (uint8_t)((crc >> 8) & 0xff);
+
+    xlSeriesSendFrame(&huart2, xl320PGFrame, 13);
+    HAL_Delay(2);
+}
+
+/**
+  * @brief  读取XL320舵机位置
+  * @param  id: 舵机ID
+  * @retval None
+  */
+void xl320ReadPosition(uint8_t id)
+{
+    uint16_t crc;
+
+    xl320PRead[4] = id;
+    crc = updateCRC(0, xl320PRead, 12);
+    xl320PRead[12] = (uint8_t)(crc & 0xff);
+    xl320PRead[13] = (uint8_t)((crc >> 8) & 0xff);
+
+    xlSeriesSendFrame(&huart2, xl320PRead, 14);
+    HAL_Delay(1); // 使用HAL_Delay替代原来的delay函数
+}
+
+/**
+  * @brief  舵机电源控制
+  * @param  isOn: 电源状态 (1=开启, 0=关闭)
+  * @retval None
+  */
+void xlPowerOff(uint8_t isOn)
+{
+    if(isOn){
+        // 开启所有舵机
+        xlSeriesTorque(SERVO_ID_1, 0x01, XL430Torque);
+        xlSeriesTorque(SERVO_ID_2, 0x01, XL430Torque);
+        xlSeriesTorque(SERVO_ID_3, 0x01, XL320Torque);
+
+        xlSeriesLed(SERVO_ID_1, 0x01, XL430Led);
+        xlSeriesLed(SERVO_ID_2, 0x01, XL430Led);
+        xlSeriesLed(SERVO_ID_3, 0x01, XL320Led);
+    } else {
+        // 关闭所有舵机
+        xlSeriesTorque(SERVO_ID_1, 0x00, XL430Torque);
+        xlSeriesTorque(SERVO_ID_2, 0x00, XL430Torque);
+        xlSeriesTorque(SERVO_ID_3, 0x00, XL320Torque);
+
+        xlSeriesLed(SERVO_ID_1, 0x00, XL430Led);
+        xlSeriesLed(SERVO_ID_2, 0x00, XL430Led);
+        xlSeriesLed(SERVO_ID_3, 0x00, XL320Led);
     }
-    // 5. CRC
-    uint16_t crc = update_crc(0, packet, total_len - 2);
-    packet[total_len - 2] = crc & 0xFF; // CRC (小端模式)
-    packet[total_len - 1] = (crc >> 8) & 0xFF;
-
-    // 6. 发送
-    dynamixel_transmit_packet(packet, total_len);
-}
-
-
-// 使能/失能扭矩
-void dynamixel_enable_torque(uint8_t id, uint8_t enable) {
-    // XL-320 控制表地址: Torque Enable = 24
-    dynamixel_write_packet(id, 24, &enable, 1);
-}
-
-// 设置LED颜色
-void dynamixel_set_led(uint8_t id, uint8_t color) {
-    // XL-320 控制表地址: LED = 25
-    dynamixel_write_packet(id, 25, &color, 1);
-}
-
-// 设置目标位置
-void dynamixel_set_goal_position(uint8_t id, uint16_t position) {
-    // XL-320 控制表地址: Goal Position = 30 (2 bytes)
-    uint8_t data[2];
-    data[0] = position & 0xFF;
-    data[1] = (position >> 8) & 0xFF;
-    dynamixel_write_packet(id, 30, data, 2);
 }
 
 /* USER CODE END 4 */
+
+/**
+  * @brief  调试函数，打印数据帧（可选）
+  * @param  frame: 数据帧指针
+  * @param  length: 数据长度
+  * @retval None
+  */
+void debugFrame(uint8_t *frame, uint8_t length)
+{
+
+    for(int i = 0; i < length; i++){
+        printf("%02X ", frame[i]);
+    }
+    printf("\r\n");
+
+}
+
 
 /**
   * @brief  This function is executed in case of error occurrence.
