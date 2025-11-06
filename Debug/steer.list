@@ -251,7 +251,7 @@ int main(void)
   // 设置舵机到初始位置
   xl320SendPosition(SERVO_ID_3, 512);
  8000244:	f44f 7100 	mov.w	r1, #512	@ 0x200
- 8000248:	2003      	movs	r0, #3
+ 8000248:	2000      	movs	r0, #0
  800024a:	f000 f97b 	bl	8000544 <xl320SendPosition>
   HAL_Delay(1000);
  800024e:	f44f 707a 	mov.w	r0, #1000	@ 0x3e8
@@ -264,11 +264,11 @@ int main(void)
     xlSeriesLed(SERVO_ID_3, LED_BLUE, XL320Led);
  8000256:	2219      	movs	r2, #25
  8000258:	2104      	movs	r1, #4
- 800025a:	2003      	movs	r0, #3
+ 800025a:	2000      	movs	r0, #0
  800025c:	f000 f90a 	bl	8000474 <xlSeriesLed>
     xl320SendPosition(SERVO_ID_3, 0);
  8000260:	2100      	movs	r1, #0
- 8000262:	2003      	movs	r0, #3
+ 8000262:	2000      	movs	r0, #0
  8000264:	f000 f96e 	bl	8000544 <xl320SendPosition>
     HAL_Delay(1500);
  8000268:	f240 50dc 	movw	r0, #1500	@ 0x5dc
@@ -278,11 +278,11 @@ int main(void)
     xlSeriesLed(SERVO_ID_3, LED_GREEN, XL320Led);
  8000270:	2219      	movs	r2, #25
  8000272:	2102      	movs	r1, #2
- 8000274:	2003      	movs	r0, #3
+ 8000274:	2000      	movs	r0, #0
  8000276:	f000 f8fd 	bl	8000474 <xlSeriesLed>
     xl320SendPosition(SERVO_ID_3, 512);
  800027a:	f44f 7100 	mov.w	r1, #512	@ 0x200
- 800027e:	2003      	movs	r0, #3
+ 800027e:	2000      	movs	r0, #0
  8000280:	f000 f960 	bl	8000544 <xl320SendPosition>
     HAL_Delay(1500);
  8000284:	f240 50dc 	movw	r0, #1500	@ 0x5dc
@@ -292,11 +292,11 @@ int main(void)
     xlSeriesLed(SERVO_ID_3, LED_RED, XL320Led);
  800028c:	2219      	movs	r2, #25
  800028e:	2101      	movs	r1, #1
- 8000290:	2003      	movs	r0, #3
+ 8000290:	2000      	movs	r0, #0
  8000292:	f000 f8ef 	bl	8000474 <xlSeriesLed>
     xl320SendPosition(SERVO_ID_3, 1023);
  8000296:	f240 31ff 	movw	r1, #1023	@ 0x3ff
- 800029a:	2003      	movs	r0, #3
+ 800029a:	2000      	movs	r0, #0
  800029c:	f000 f952 	bl	8000544 <xl320SendPosition>
     HAL_Delay(1500);
  80002a0:	f240 50dc 	movw	r0, #1500	@ 0x5dc
@@ -432,7 +432,7 @@ void xlSeriesStart(void)
     xlSeriesLed(SERVO_ID_3, 0x01, XL320Led);
  800035a:	2219      	movs	r2, #25
  800035c:	2101      	movs	r1, #1
- 800035e:	2003      	movs	r0, #3
+ 800035e:	2000      	movs	r0, #0
  8000360:	f000 f888 	bl	8000474 <xlSeriesLed>
     HAL_Delay(100);
  8000364:	2064      	movs	r0, #100	@ 0x64
@@ -457,7 +457,7 @@ void xlSeriesStart(void)
     xlSeriesTorque(SERVO_ID_3, 0x01, XL320Torque);
  800038a:	2218      	movs	r2, #24
  800038c:	2101      	movs	r1, #1
- 800038e:	2003      	movs	r0, #3
+ 800038e:	2000      	movs	r0, #0
  8000390:	f000 f8a4 	bl	80004dc <xlSeriesTorque>
     HAL_Delay(100);
  8000394:	2064      	movs	r0, #100	@ 0x64
