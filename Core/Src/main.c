@@ -74,9 +74,11 @@ uint8_t xl320PGFrame[]={ 0xFF,0xFF,0xFD,0x00,  0x00,   0x06,0x00,   0x03,      0
 
 uint8_t xl320PRead[]={   0xFF,0xFF,0xFD,0x00,  0x00,   0x07,0x00,   0x02,      0x25,0x00,   0x02,0x00,              0x21,0xB5};
 
-X320PositionInfo *xl320_1=0;
-uint8_t xl320_1_data[9];
-
+// XL320接收相关全局变量
+uint8_t xl320_rx_buffer[XL320_RX_BUFFER_SIZE];
+uint16_t xl320_rx_index = 0;
+uint8_t xl320_packet_ready = 0;
+uint32_t xl320_position_value = 0;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -96,6 +98,11 @@ void xl320SendPGain(uint8_t id, uint8_t pGain);
 void xl320ReadPosition(uint8_t id);
 void xlPowerOff(uint8_t isOn);
 void debugFrame(uint8_t *frame, uint8_t length);
+void testMatrix(void);
+// XL320位置读取相关函数
+uint16_t xl320GetPosition(uint8_t id);
+static void xl320ResetRxBuffer(void);
+static int8_t xl320ParsePositionData(uint8_t *data, uint16_t length, uint16_t *position);
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
@@ -141,13 +148,14 @@ int main(void)
   xlSeriesStart();
 
   // 设置舵机到初始位置
-  //xl320SendMovingSpeed(SERVO_ID, 100);
+  xl320SendMovingSpeed(SERVO_ID, 100);
   xl320SendPosition(SERVO_ID, 512);
   xlSeriesLed(SERVO_ID, LED_GREEN, XL320Led);
   HAL_Delay(5000);
   xl320SendPosition(SERVO_ID, 0);
   xlSeriesLed(SERVO_ID, LED_PURPLE, XL320Led);
   HAL_Delay(5000);
+
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -156,7 +164,7 @@ int main(void)
   {
     /* USER CODE END WHILE */
 
-    // 任务2: 转到1023
+    //任务2: 转到1023
     xlSeriesLed(SERVO_ID, LED_GREEN, XL320Led);
     xl320SendPosition(SERVO_ID, 1023);
     HAL_Delay(5000);
@@ -220,17 +228,21 @@ void SystemClock_Config(void)
 void xlSeriesStart(void)
 {
     // 初始化LED和扭矩
-
     xlSeriesLed(SERVO_ID, 0x01, XL320Led);
     HAL_Delay(100);
 
     xlSeriesTorque(SERVO_ID, 0x01, XL320Torque);
     HAL_Delay(100);
 
+    //设置为Joint模式
     xlSeriesControlMode(SERVO_ID, 2);
     HAL_Delay(100);
 
+    //控制转速
     xl320SendMovingSpeed(SERVO_ID, 100);
+
+    // 启动串口接收中断
+    HAL_UART_Receive_IT(&huart2, &xl320_rx_buffer[0], 1);
 }
 
 
@@ -514,13 +526,234 @@ void xlPowerOff(uint8_t isOn)
 void debugFrame(uint8_t *frame, uint8_t length)
 {
 
-    for(int i = 0; i < length; i++){
-        printf("%02X ", frame[i]);
-    }
-    printf("\r\n");
+//    for(int i = 0; i < length; i++){
+//        printf("%02X ", frame[i]);
+//    }
+//    printf("\r\n");
 
 }
 
+void testMatrix(void){
+	  xlSeriesLed(0x01, LED_PURPLE, XL320Led);
+	  xlSeriesLed(0x03, LED_PURPLE, XL320Led);
+	  xlSeriesLed(0x05, LED_PURPLE, XL320Led);
+	  xlSeriesLed(0x07, LED_PURPLE, XL320Led);
+	  xlSeriesLed(0x09, LED_PURPLE, XL320Led);
+	  xlSeriesLed(0x02, LED_CYAN, XL320Led);
+	  xlSeriesLed(0x04, LED_CYAN, XL320Led);
+	  xlSeriesLed(0x06, LED_CYAN, XL320Led);
+	  xlSeriesLed(0x08, LED_CYAN, XL320Led);
+}
+
+//=================================================================
+//串口接受舵机数据相关函数
+//=================================================================
+/**
+  * @brief  重置XL320接收缓冲区
+  * @retval None
+  */
+static void xl320ResetRxBuffer(void)
+{
+    xl320_rx_index = 0;
+    for(int i = 0; i < XL320_RX_BUFFER_SIZE; i++) {
+        xl320_rx_buffer[i] = 0;
+    }
+}
+
+/**
+  * @brief  解析XL320返回的位置数据
+  * @param  data: 接收到的数据指针
+  * @param  length: 数据长度
+  * @param  position: 解析出的位置值指针
+  * @retval 解析结果
+  */
+static int8_t xl320ParsePositionData(uint8_t *data, uint16_t length, uint16_t *position)
+{
+    // 检查最小长度
+    if (length < 10) {
+        return XL320_PARSE_LENGTH_ERROR;
+    }
+
+    // 检查包头 (0xFF 0xFF 0xFD 0x00)
+    if (data[0] != 0xFF || data[1] != 0xFF || data[2] != 0xFD || data[3] != 0x00) {
+        return XL320_PARSE_HEADER_ERROR;
+    }
+
+    // 解析包长度（小端格式）
+    uint16_t packet_length = (data[6] << 8) | data[5];
+
+    // 检查包长度是否匹配（总长度 = 包头4 + 长度2 + 数据 + CRC2）
+    if (length != (packet_length + 7)) {
+        return XL320_PARSE_LENGTH_ERROR;
+    }
+
+    uint8_t instruction = data[7]; // 应该是0x55 (状态返回)
+    uint8_t error = data[8];
+
+    // 检查指令是否为状态返回
+    if (instruction != 0x55) {
+        return XL320_PARSE_INSTRUCTION_ERROR;
+    }
+
+    // 检查错误码
+    if (error != 0) {
+        return XL320_PARSE_SERVO_ERROR;
+    }
+
+    // 简化版CRC校验（可选，如果需要更严格的校验可以启用）
+    // uint16_t calculated_crc = updateCRC(0, data, length - 2);
+    // uint16_t received_crc = (data[length - 1] << 8) | data[length - 2];
+    // if (calculated_crc != received_crc) {
+    //     return XL320_PARSE_CRC_ERROR;
+    // }
+
+    // 解析位置数据（小端格式，位置在参数的第1-2字节）
+    if (packet_length >= 4) { // 错误码1字节 + 位置2字节 + 其他参数
+        *position = (data[10] << 8) | data[9]; // 小端格式：低位在前，高位在后
+        return XL320_PARSE_SUCCESS;
+    }
+
+    return XL320_PARSE_LENGTH_ERROR;
+}
+
+/**
+  * @brief  串口接收中断回调函数 - 核心接收函数
+  * @param  huart: 串口句柄
+  * @retval None
+  */
+void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
+{
+    if (huart->Instance == USART2) {
+        uint8_t received_byte = xl320_rx_buffer[xl320_rx_index];
+
+        // 状态机方式解析数据包
+        if (xl320_rx_index == 0) {
+            // 等待第一个0xFF
+            if (received_byte == 0xFF) {
+                xl320_rx_index = 1;
+            } else {
+                xl320_rx_index = 0; // 不是0xFF，重置
+            }
+        }
+        else if (xl320_rx_index == 1) {
+            // 等待第二个0xFF
+            if (received_byte == 0xFF) {
+                xl320_rx_index = 2;
+            } else {
+                xl320ResetRxBuffer();
+            }
+        }
+        else if (xl320_rx_index == 2) {
+            // 等待0xFD
+            if (received_byte == 0xFD) {
+                xl320_rx_index = 3;
+            } else {
+                xl320ResetRxBuffer();
+            }
+        }
+        else if (xl320_rx_index == 3) {
+            // 等待0x00
+            if (received_byte == 0x00) {
+                xl320_rx_index = 4;
+            } else {
+                xl320ResetRxBuffer();
+            }
+        }
+        else {
+            // 已经收到完整包头，继续接收剩余数据
+            xl320_rx_index++;
+
+            // 检查是否收到足够的数据来计算包长度
+            if (xl320_rx_index >= 7) {
+                // 解析包长度（小端格式）
+                uint16_t packet_length = (xl320_rx_buffer[6] << 8) | xl320_rx_buffer[5];
+                uint16_t total_length = packet_length + 7; // 总长度
+
+                // 检查是否收到完整数据包
+                if (xl320_rx_index >= total_length) {
+                    // 收到完整数据包，设置标志位
+                    xl320_packet_ready = 1;
+
+                    // 立即解析位置数据
+                    uint16_t position;
+                    int8_t result = xl320ParsePositionData(xl320_rx_buffer, xl320_rx_index, &position);
+
+                    if (result == XL320_PARSE_SUCCESS) {
+                        xl320_position_value = position;
+                    } else {
+                        xl320_position_value = 0xFFFF; // 错误标志
+                    }
+
+                    // 重置缓冲区，准备接收下一个包
+                    xl320ResetRxBuffer();
+
+                    // 重新启动接收中断
+                    HAL_UART_Receive_IT(huart, &xl320_rx_buffer[0], 1);
+                    return;
+                }
+            }
+
+            // 防止缓冲区溢出
+            if (xl320_rx_index >= XL320_RX_BUFFER_SIZE) {
+                xl320ResetRxBuffer();
+            }
+        }
+
+        // 继续接收下一个字节
+        HAL_UART_Receive_IT(huart, &xl320_rx_buffer[xl320_rx_index], 1);
+    }
+}
+
+/**
+  * @brief  获取XL320当前位置（主函数调用接口）
+  * @param  id: 舵机ID
+  * @retval 位置值，0xFFFF表示读取失败
+  */
+uint16_t xl320GetPosition(uint8_t id)
+{
+    // 发送读取位置指令
+    uint16_t crc;
+    uint8_t read_frame[] = {0xFF, 0xFF, 0xFD, 0x00, id, 0x07, 0x00, 0x02, 0x25, 0x00, 0x02, 0x00, 0x00, 0x00};
+
+    // 计算CRC
+    crc = updateCRC(0, read_frame, 12);
+    read_frame[12] = (uint8_t)(crc & 0xFF);
+    read_frame[13] = (uint8_t)((crc >> 8) & 0xFF);
+
+    // 发送读取指令
+    xlSeriesSetDirection(1);
+    HAL_UART_Transmit(&huart2, read_frame, 14, 100);
+    while (HAL_UART_GetState(&huart2) != HAL_UART_STATE_READY);
+    xlSeriesSetDirection(0);
+
+    // 等待数据接收完成（带超时）
+    uint32_t start_time = HAL_GetTick();
+    xl320_packet_ready = 0;
+
+    while ((HAL_GetTick() - start_time) < XL320_READ_TIMEOUT) {
+        if (xl320_packet_ready) {
+            return xl320_position_value;
+        }
+        HAL_Delay(1);
+    }
+
+    return 0xFFFF; // 超时
+}
+
+/**
+  * @brief  串口错误回调函数
+  * @param  huart: 串口句柄
+  * @retval None
+  */
+void HAL_UART_ErrorCallback(UART_HandleTypeDef *huart)
+{
+    if (huart->Instance == USART2) {
+        // 串口错误，重置接收状态
+        xl320ResetRxBuffer();
+        // 重新启动接收
+        HAL_UART_Receive_IT(&huart2, &xl320_rx_buffer[0], 1);
+    }
+}
 
 /**
   * @brief  This function is executed in case of error occurrence.
