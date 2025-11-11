@@ -145,16 +145,16 @@ int main(void)
 
   /* USER CODE BEGIN 2 */
   // 初始化舵机系统
-  xlSeriesStart();
-
-  // 设置舵机到初始位置
-  xl320SendMovingSpeed(SERVO_ID, 100);
-  xl320SendPosition(SERVO_ID, 512);
-  xlSeriesLed(SERVO_ID, LED_GREEN, XL320Led);
-  HAL_Delay(5000);
-  xl320SendPosition(SERVO_ID, 0);
-  xlSeriesLed(SERVO_ID, LED_PURPLE, XL320Led);
-  HAL_Delay(5000);
+//  xlSeriesStart();
+//
+//  // 设置舵机到初始位置
+//  xl320SendMovingSpeed(SERVO_ID, 100);
+//  xl320SendPosition(SERVO_ID, 512);
+//  xlSeriesLed(SERVO_ID, LED_GREEN, XL320Led);
+//  HAL_Delay(5000);
+//  xl320SendPosition(SERVO_ID, 0);
+//  xlSeriesLed(SERVO_ID, LED_PURPLE, XL320Led);
+//  HAL_Delay(5000);
 
   /* USER CODE END 2 */
 
@@ -163,16 +163,16 @@ int main(void)
   while (1)
   {
     /* USER CODE END WHILE */
-
-    //任务2: 转到1023
-    xlSeriesLed(SERVO_ID, LED_GREEN, XL320Led);
-    xl320SendPosition(SERVO_ID, 1023);
-    HAL_Delay(5000);
-
-    // 任务3: 转到0
-	xlSeriesLed(SERVO_ID, LED_CYAN, XL320Led);
-	xl320SendPosition(SERVO_ID, 0);
-	HAL_Delay(5000);
+//
+//    //任务2: 转到1023
+//    xlSeriesLed(SERVO_ID, LED_GREEN, XL320Led);
+//    xl320SendPosition(SERVO_ID, 1023);
+//    HAL_Delay(5000);
+//
+//    // 任务3: 转到0
+//	xlSeriesLed(SERVO_ID, LED_CYAN, XL320Led);
+//	xl320SendPosition(SERVO_ID, 0);
+//	HAL_Delay(5000);
 
   }
   /* USER CODE END 3 */
@@ -242,7 +242,7 @@ void xlSeriesStart(void)
     xl320SendMovingSpeed(SERVO_ID, 100);
 
     // 启动串口接收中断
-    HAL_UART_Receive_IT(&huart2, &xl320_rx_buffer[0], 1);
+    //HAL_UART_Receive_IT(&huart2, &xl320_rx_buffer[0], 1);
 }
 
 
