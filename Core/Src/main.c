@@ -155,7 +155,7 @@ int main(void)
 
   // 设置舵机到初始位置
   //xl320SendMovingSpeed(SERVO_ID, 100);
-  xl320SendPosition(SERVO_ID, 510);
+  xl320SendPosition(SERVO_ID, 512);
   xlSeriesLed(SERVO_ID, LED_CYAN, XL320Led);
   HAL_Delay(2000);
 //  xl320SendPosition(SERVO_ID, 0);
