@@ -83,7 +83,6 @@ uint8_t xl320ReadGoalPosition[] = {0xFF,0xFF,0xFD,0x00,0x00,0x07,0x00,0x02,0x25,
 // 串口接收缓冲区
 uint8_t uart2_rx_buffer[16];
 volatile uint8_t position_received = 0;
-uint16_t current_position = 0;
 
 /* USER CODE END PV */
 
@@ -107,7 +106,7 @@ void xlPowerOff(uint8_t isOn);
 void xl320ReadPosition(uint8_t id);
 uint8_t verifyPositionPacket(uint8_t *data);
 uint16_t parsePositionValue(uint8_t *data);
-void processPositionData(void);
+uint16_t processPositionData(void);
 void USART2_ReadCallback(void);
 /* USER CODE END PFP */
 
@@ -155,7 +154,7 @@ int main(void)
 
   // 设置舵机到初始位置
   //xl320SendMovingSpeed(SERVO_ID, 100);
-  xl320SendPosition(SERVO_ID, 512);
+  xl320SendPosition(SERVO_ID, 610);
   xlSeriesLed(SERVO_ID, LED_CYAN, XL320Led);
   HAL_Delay(2000);
 //  xl320SendPosition(SERVO_ID, 0);
@@ -170,8 +169,10 @@ int main(void)
   HAL_Delay(10); // 短暂等待数据接收
 
   // 3. 处理接收到的数据
-  processPositionData();
-  uint8_t* data = {1};
+  uint16_t curr_pos = processPositionData();
+  char message[50];
+  uint16_t len = sprintf(message, "id:%d, position:%d\r\n", SERVO_ID, curr_pos);
+
 
   /* USER CODE END 2 */
 
@@ -181,20 +182,10 @@ int main(void)
   {
     /* USER CODE END WHILE */
 
-    // 任务2: 转到1023
-    //xlSeriesLed(SERVO_ID, LED_PURPLE, XL320Led);
-    //xl320SendPosition(SERVO_ID, 1023);
     HAL_Delay(1000);
 
-    //HAL_GPIO_WritePin(DIR1_GPIO_Port, DIR1_Pin, GPIO_PIN_SET); // 设置为发送模式
-    HAL_GPIO_WritePin(DIR2_GPIO_Port, DIR2_Pin, GPIO_PIN_SET); // 设置为发送模式
-    HAL_UART_Transmit(&huart3, data, 1, 100);
-    //HAL_GPIO_WritePin(DIR1_GPIO_Port, DIR1_Pin, GPIO_PIN_RESET);
-    HAL_GPIO_WritePin(DIR2_GPIO_Port, DIR2_Pin, GPIO_PIN_RESET);
+    Debug_Print(message,len);
 
-    // 任务3: 转到0
-	//xlSeriesLed(SERVO_ID, LED_CYAN, XL320Led);
-	//xl320SendPosition(SERVO_ID, 0);
 	HAL_Delay(1000);
 
   }
@@ -255,7 +246,7 @@ void xlSeriesStart(void)
     xlSeriesLed(SERVO_ID, 0x01, XL320Led);
     HAL_Delay(100);
 
-    xlSeriesTorque(SERVO_ID, 0x01, XL320Torque);
+    xlSeriesTorque(SERVO_ID, 0x00, XL320Torque);
     HAL_Delay(100);
 
     xlSeriesControlMode(SERVO_ID, 2);
@@ -518,45 +509,26 @@ void xlPowerOff(uint8_t isOn)
 
 /* USER CODE END 4 */
 
-///**
-//  * @brief  调试函数，打印数据帧（可选）
-//  * @param  frame: 数据帧指针
-//  * @param  length: 数据长度
-//  * @retval None
-//  */
-//void debugFrame(uint8_t *frame, uint8_t length)
-//{
-//
-//    for(int i = 0; i < length; i++){
-//        printf("%02X ", frame[i]);
-//    }
-//    printf("\r\n");
-//
-//}
 
 /**
-  * @brief  通过串口1发送字符串到PC端（不换行）
+  * @brief  通过串口3发送字符串到PC端（不换行）
   * @param  message: 要发送的字符串
   * @retval None
   */
-void Debug_Print(const char* message)
+void Debug_Print(const char* message, uint16_t len)
 {
-    uint16_t len = 0;
-    while (message[len] != '\0') {
-        len++;
-    }
-    HAL_UART_Transmit(&huart1, (uint8_t*)message, len, 100);
-}
 
-/**
-  * @brief  通过串口1发送字符串到PC端（自动换行）
-  * @param  message: 要发送的字符串
-  * @retval None
-  */
-void Debug_Println(const char* message)
-{
-    Debug_Print(message);
-    Debug_Print("\r\n");  // 添加换行符
+	// 设置串口3为发送模式
+	HAL_GPIO_WritePin(DIR2_GPIO_Port, DIR2_Pin, GPIO_PIN_SET);
+
+	// 通过串口3发送数据
+	HAL_UART_Transmit(&huart3, (uint8_t*)message, len, 100);
+
+	// 等待发送完成
+	while (HAL_UART_GetState(&huart3) != HAL_UART_STATE_READY);
+
+	// 设置串口3为接收模式
+	HAL_GPIO_WritePin(DIR2_GPIO_Port, DIR2_Pin, GPIO_PIN_RESET);
 }
 
 /**
@@ -594,7 +566,7 @@ void xl320ReadPosition(uint8_t id)
 		position_received = 0;
 	}
 
-    HAL_Delay(2000);
+    HAL_Delay(500);
 }
 
 /**
@@ -631,29 +603,17 @@ uint16_t parsePositionValue(uint8_t *data)
 
 /**
  * @brief 处理接收到的位置数据
- * @retval None
+ * @retval 返回位置数据
  */
-void processPositionData(void)
+uint16_t processPositionData(void)
 {
     if (position_received) {
         if (verifyPositionPacket(uart2_rx_buffer)) {
-            current_position = parsePositionValue(uart2_rx_buffer);
-            uint8_t point = current_position % 3;
-            // 根据位置值控制LED：奇数亮红灯，偶数亮蓝灯
-            if (point == 0) {
-                // 被3整除 - 白灯
-                xlSeriesLed(SERVO_ID, LED_WHITE, XL320Led);
-            } else if(point == 1){
-                // 余数为1 - 蓝灯
-                xlSeriesLed(SERVO_ID, LED_BLUE, XL320Led);
-            } else if(point == 2){
-            	// 余数为2 -  绿灯
-            	xlSeriesLed(SERVO_ID, LED_GREEN, XL320Led);
-            }
-            HAL_Delay(2000);
+            uint16_t current_position = parsePositionValue(uart2_rx_buffer);
             position_received = 0; // 重置标志
+            return current_position;
 		} else {
-			xlSeriesLed(SERVO_ID, LED_YELLOW, XL320Led);
+			xlSeriesLed(SERVO_ID, LED_GREEN, XL320Led);
 		}
     }
 }
