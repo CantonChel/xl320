@@ -171,6 +171,7 @@ int main(void)
 
   // 3. 处理接收到的数据
   processPositionData();
+  uint8_t* data = {1};
 
   /* USER CODE END 2 */
 
@@ -181,12 +182,18 @@ int main(void)
     /* USER CODE END WHILE */
 
     // 任务2: 转到1023
-    xlSeriesLed(SERVO_ID, LED_PURPLE, XL320Led);
+    //xlSeriesLed(SERVO_ID, LED_PURPLE, XL320Led);
     //xl320SendPosition(SERVO_ID, 1023);
     HAL_Delay(1000);
 
+    //HAL_GPIO_WritePin(DIR1_GPIO_Port, DIR1_Pin, GPIO_PIN_SET); // 设置为发送模式
+    HAL_GPIO_WritePin(DIR2_GPIO_Port, DIR2_Pin, GPIO_PIN_SET); // 设置为发送模式
+    HAL_UART_Transmit(&huart3, data, 1, 100);
+    //HAL_GPIO_WritePin(DIR1_GPIO_Port, DIR1_Pin, GPIO_PIN_RESET);
+    HAL_GPIO_WritePin(DIR2_GPIO_Port, DIR2_Pin, GPIO_PIN_RESET);
+
     // 任务3: 转到0
-	xlSeriesLed(SERVO_ID, LED_CYAN, XL320Led);
+	//xlSeriesLed(SERVO_ID, LED_CYAN, XL320Led);
 	//xl320SendPosition(SERVO_ID, 0);
 	HAL_Delay(1000);
 
